@@ -24,69 +24,60 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Catálogo expandido con ítems de ALTO VALOR (T6.1, T6.2, T7.1, T8.1, Capas de Facción/Artefacto)
-HIGH_VALUE_ITEMS = [
+# Diccionario de traducción de IDs técnicos de la API a nombres amigables en español
+ITEM_NAMES_ES = {
     # Capas de Artefacto y Facción
-    "T6_CAPEITEM_DEMON",
-    "T6_CAPEITEM_DEMON@1",
-    "T6_CAPEITEM_DEMON@2",
-    "T7_CAPEITEM_DEMON@1",
-    "T8_CAPEITEM_DEMON@1",
-    "T6_CAPEITEM_UNDEAD",
-    "T6_CAPEITEM_UNDEAD@1",
-    "T6_CAPEITEM_UNDEAD@2",
-    "T7_CAPEITEM_UNDEAD@1",
-    "T6_CAPEITEM_HERETIC",
-    "T6_CAPEITEM_HERETIC@1",
-    "T6_CAPEITEM_FW_FORTSTERLING",
-    "T6_CAPEITEM_FW_FORTSTERLING@1",
-    "T6_CAPEITEM_FW_MARTLOCK",
-    "T6_CAPEITEM_FW_MARTLOCK@1",
-    "T6_CAPEITEM_FW_LYMHURST",
-    "T6_CAPEITEM_FW_LYMHURST@1",
-    "T6_CAPEITEM_FW_BRIDGEWATCH",
-    "T6_CAPEITEM_FW_BRIDGEWATCH@1",
-    "T6_CAPEITEM_FW_THETFORD",
-    "T6_CAPEITEM_FW_THETFORD@1",
-    # Monturas de Valor Medio/Alto
-    "T6_MOUNT_ARMOREDHORSE",
-    "T7_MOUNT_ARMOREDHORSE",
-    "T8_MOUNT_ARMOREDHORSE",
-    "T8_MOUNT_COW",
-    "T7_MOUNT_DIREWOLF",
-    "T8_MOUNT_DIREWOLF",
-    # Equipamiento T6.1 - T8.1 Popular
-    "T6_BAG@1",
-    "T7_BAG@1",
-    "T8_BAG",
-    "T8_BAG@1",
-    "T6_MAIN_SWORD@1",
-    "T7_MAIN_SWORD@1",
-    "T8_MAIN_SWORD",
-    "T6_2H_BOW@1",
-    "T7_2H_BOW@1",
-    "T8_2H_BOW",
-    "T6_2H_HOLYSTAFF@1",
-    "T7_2H_HOLYSTAFF@1",
-    "T8_2H_HOLYSTAFF",
-    "T6_HEAD_PLATE_SET1@1",
-    "T7_HEAD_PLATE_SET1@1",
-    "T8_HEAD_PLATE_SET1",
-    "T6_ARMOR_PLATE_SET1@1",
-    "T7_ARMOR_PLATE_SET1@1",
-    "T8_ARMOR_PLATE_SET1",
-    "T6_SHOES_PLATE_SET1@1",
-    "T7_SHOES_PLATE_SET1@1",
-    "T8_SHOES_PLATE_SET1",
-    # Consumibles de Alto Nivel
-    "T8_POTION_HEAL",
-    "T8_POTION_CLEANSE",
-    "T8_OMELETTE",
-    "T8_STEW",
-]
+    "T6_CAPEITEM_DEMON": "Capa de Demonio -T6.0-",
+    "T6_CAPEITEM_DEMON@1": "Capa de Demonio -T6.1-",
+    "T6_CAPEITEM_DEMON@2": "Capa de Demonio -T6.2-",
+    "T7_CAPEITEM_DEMON@1": "Capa de Demonio -T7.1-",
+    "T8_CAPEITEM_DEMON@1": "Capa de Demonio -T8.1-",
+    "T6_CAPEITEM_UNDEAD": "Capa de No Muerto -T6.0-",
+    "T6_CAPEITEM_UNDEAD@1": "Capa de No Muerto -T6.1-",
+    "T6_CAPEITEM_UNDEAD@2": "Capa de No Muerto -T6.2-",
+    "T7_CAPEITEM_UNDEAD@1": "Capa de No Muerto -T7.1-",
+    "T6_CAPEITEM_HERETIC": "Capa de Hereje -T6.0-",
+    "T6_CAPEITEM_HERETIC@1": "Capa de Hereje -T6.1-",
+    "T6_CAPEITEM_FW_FORTSTERLING": "Capa de Fort Sterling -T6.0-",
+    "T6_CAPEITEM_FW_FORTSTERLING@1": "Capa de Fort Sterling -T6.1-",
+    "T6_CAPEITEM_FW_MARTLOCK": "Capa de Martlock -T6.0-",
+    "T6_CAPEITEM_FW_MARTLOCK@1": "Capa de Martlock -T6.1-",
+    "T6_CAPEITEM_FW_LYMHURST": "Capa de Lymhurst -T6.0-",
+    "T6_CAPEITEM_FW_LYMHURST@1": "Capa de Lymhurst -T6.1-",
+    "T6_CAPEITEM_FW_BRIDGEWATCH": "Capa de Bridgewatch -T6.0-",
+    "T6_CAPEITEM_FW_BRIDGEWATCH@1": "Capa de Bridgewatch -T6.1-",
+    "T6_CAPEITEM_FW_THETFORD": "Capa de Thetford -T6.0-",
+    "T6_CAPEITEM_FW_THETFORD@1": "Capa de Thetford -T6.1-",
+    # Monturas
+    "T6_MOUNT_ARMOREDHORSE": "Caballo Blindado -T6.0-",
+    "T7_MOUNT_ARMOREDHORSE": "Caballo Blindado -T7.0-",
+    "T8_MOUNT_ARMOREDHORSE": "Caballo Blindado -T8.0-",
+    "T8_MOUNT_COW": "Buey de Transporte -T8.0-",
+    "T7_MOUNT_DIREWOLF": "Lobo Huargo -T7.0-",
+    "T8_MOUNT_DIREWOLF": "Lobo Huargo -T8.0-",
+    # Equipamiento y Bolsas
+    "T6_BAG@1": "Bolsa -T6.1-",
+    "T7_BAG@1": "Bolsa -T7.1-",
+    "T8_BAG": "Bolsa -T8.0-",
+    "T8_BAG@1": "Bolsa -T8.1-",
+    "T6_MAIN_SWORD@1": "Espada Ancha -T6.1-",
+    "T7_MAIN_SWORD@1": "Espada Ancha -T7.1-",
+    "T8_MAIN_SWORD": "Espada Ancha -T8.0-",
+    "T6_2H_BOW@1": "Arco -T6.1-",
+    "T7_2H_BOW@1": "Arco -T7.1-",
+    "T8_2H_BOW": "Arco -T8.0-",
+    "T6_2H_HOLYSTAFF@1": "Bastón Sagrado -T6.1-",
+    "T7_2H_HOLYSTAFF@1": "Bastón Sagrado -T7.1-",
+    "T8_2H_HOLYSTAFF": "Bastón Sagrado -T8.0-",
+    # Consumibles
+    "T8_POTION_HEAL": "Poción de Curación -T8.0-",
+    "T8_POTION_CLEANSE": "Poción de Limpieza -T8.0-",
+    "T8_OMELETTE": "Tortilla -T8.0-",
+    "T8_STEW": "Guisado -T8.0-",
+}
 
-# Configuración de límites para evitar compras masivas de bajo valor
-MIN_UNIT_PRICE = 30000  # Solo ítems que cuesten más de 30,000 de plata c/u
+HIGH_VALUE_ITEMS = list(ITEM_NAMES_ES.keys())
+MIN_UNIT_PRICE = 30000
 
 
 def calcular_portafolio_practico(
@@ -129,7 +120,6 @@ def calcular_portafolio_practico(
                 p_compra = precios_origen[item_id]
                 p_venta = precios_destino[item_id]
 
-                # Filtro clave: Ignorar ítems baratos para no comprar cientos de unidades
                 if p_compra < MIN_UNIT_PRICE:
                     continue
 
@@ -142,6 +132,7 @@ def calcular_portafolio_practico(
                 if roi >= 10.0 and ganancia_unidad > 0:
                     oportunidades.append({
                         "item": item_id,
+                        "nombre_es": ITEM_NAMES_ES.get(item_id, item_id),
                         "compra": p_compra,
                         "venta": p_venta,
                         "ganancia_u": ganancia_unidad,
@@ -151,7 +142,7 @@ def calcular_portafolio_practico(
         if not oportunidades:
             return (
                 None,
-                f"No se encontraron oportunidades prácticas entre {ciudad_origen} y {ciudad_destino} con ítems mayores a {MIN_UNIT_PRICE:,} Silver.",
+                f"No se encontraron oportunidades prácticas entre {ciudad_origen} y {ciudad_destino}.",
             )
 
         oportunidades.sort(key=lambda x: x["roi"], reverse=True)
@@ -165,13 +156,11 @@ def calcular_portafolio_practico(
             if capital_restante < opp["compra"]:
                 continue
 
-            # Máximo 25% del presupuesto en un solo ítem para forzar diversidad
             max_inversion_item = presupuesto * 0.25
             unidades = int(
                 min(capital_restante, max_inversion_item) // opp["compra"]
             )
 
-            # Límite práctico: Máximo 20 unidades por ítem
             unidades = min(unidades, 20)
 
             if unidades > 0:
@@ -183,7 +172,7 @@ def calcular_portafolio_practico(
                 ganancia_total += ganancia_lote
 
                 carrito.append({
-                    "item": opp["item"],
+                    "nombre_es": opp["nombre_es"],
                     "unidades": unidades,
                     "precio_compra": opp["compra"],
                     "precio_venta": opp["venta"],
@@ -208,7 +197,7 @@ def calcular_portafolio_practico(
 
 @bot.event
 async def on_ready():
-    print(f"¡Bot de Inversión Práctica listo como {bot.user}!")
+    print(f"¡Bot listo con nombres en español como {bot.user}!")
 
 
 @bot.command()
@@ -219,7 +208,7 @@ async def invertir(
     destino: str = "Caerleon",
 ):
     await ctx.send(
-        f"⏳ Analizando mercado de ítems de alto valor para invertir **{monto:,} Silver** desde **{origen}** hacia **{destino}**..."
+        f"⏳ Analizando mercado para invertir **{monto:,} Silver** desde **{origen}** hacia **{destino}**..."
     )
 
     resultado, error = calcular_portafolio_practico(monto, origen, destino)
@@ -229,21 +218,19 @@ async def invertir(
         return
 
     msg = (
-        f"📊 **PORTAFOLIO DE INVERSIÓN PRÁCTICO**\n"
+        f"📊 **PORTAFOLIO DE INVERSIÓN SUGERIDO**\n"
         f"📍 **Ruta:** {resultado['origen']} ➔ {resultado['destino']}\n"
-        f"💰 **Presupuesto Usado:** {resultado['inversion']:,} / {monto:,} Silver\n"
-        f"📈 **Ganancia Neta Estimada:** **+{resultado['ganancia']:,} Silver**\n"
-        f"🚀 **Retorno de Inversión (ROI):** **{resultado['roi_total']}%**\n"
+        f"💰 **Inversión Total:** {resultado['inversion']:,} / {monto:,} Silver\n"
+        f"📈 **Ganancia Neta Estimada:** **+{resultado['ganancia']:,} Silver** ({resultado['roi_total']}% ROI)\n"
         f"----------------------------------------\n"
-        f"🛒 **CARRITO DE COMPRAS (Ítems de Alto Valor):**\n\n"
+        f"🛒 **CARRITO DE COMPRAS:**\n\n"
     )
 
     for item in resultado["carrito"]:
         msg += (
-            f"📦 **{item['unidades']}x** `{item['item']}`\n"
-            f"   • Comprar en {resultado['origen']} a: {item['precio_compra']:,} c/u\n"
-            f"   • Vender en {resultado['destino']} a: {item['precio_venta']:,} c/u\n"
-            f"   • Ganancia lote: +{item['ganancia_lote']:,} Silver ({item['roi']}% ROI)\n\n"
+            f"📦 **{item['nombre_es']} {item['unidades']} unidades**\n"
+            f"   • Comprar a: {item['precio_compra']:,} c/u | Vender a: {item['precio_venta']:,} c/u\n"
+            f"   • Ganancia estimada del lote: +{item['ganancia_lote']:,} Silver\n\n"
         )
 
     await ctx.send(msg)
