@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import os
 from threading import Thread
 from flask import Flask
@@ -6,71 +7,41 @@ import discord
 from discord.ext import commands
 import requests
 
-# Servidor Flask para mantener vivo el Web Service en Render
+# 1. Servidor Flask para mantener vivo el Web Service en Render
 app = Flask("")
 
 
 @app.route("/")
 def home():
-    return "Bot en línea 24/7"
+    return "Bot de Inversión y Mercado Albion 24/7 en línea"
 
 
 def run_http():
+    # Render asigna dinámicamente un puerto en la variable PORT
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
 
 
-# Configuración de intents de Discord
+# 2. Configuración de Discord
 intents = discord.Intents.default()
 intents.message_content = True
-
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Ciudades principales de Albion Online
-CITIES = [
-    "Martlock",
-    "Bridgewatch",
-    "Lymhurst",
-    "Fort Sterling",
-    "Thetford",
-    "Caerleon",
-]
-
-# Lista de ítems para monitorear
-ITEMS_TO_SCAN = [
-    "T4_BAG",
-    "T5_BAG",
-    "T6_BAG",
-    "T7_BAG",
-    "T8_BAG",
-    "T4_MOUNT_RIDINGHORSE",
-    "T5_MOUNT_RIDINGHORSE",
-    "T6_MOUNT_RIDINGHORSE",
-    "T4_MOUNT_ARMOREDHORSE",
-    "T5_MOUNT_ARMOREDHORSE",
-    "T6_MOUNT_ARMOREDHORSE",
-    "T5_MOUNT_COW",
-    "T8_MOUNT_COW",
-    "T4_MAIN_SWORD",
-    "T5_MAIN_SWORD",
-    "T6_MAIN_SWORD",
-    "T7_MAIN_SWORD",
-    "T8_MAIN_SWORD",
-    "T4_2H_BOW",
-    "T5_2H_BOW",
-    "T6_2H_BOW",
-    "T7_2H_BOW",
-    "T8_2H_BOW",
-    "T4_2H_HOLYSTAFF",
-    "T5_2H_HOLYSTAFF",
-    "T6_2H_HOLYSTAFF",
-    "T7_2H_HOLYSTAFF",
-    "T8_2H_HOLYSTAFF",
-    "T4_MAIN_CURSEDSTAFF",
-    "T5_MAIN_CURSEDSTAFF",
-    "T6_MAIN_CURSEDSTAFF",
-    "T7_MAIN_CURSEDSTAFF",
-    "T8_MAIN_CURSEDSTAFF",
+# 3. Catálogo exclusivo de Ítems de ALTA ROTACIÓN (Liquidez garantizada)
+HIGH_LIQUIDITY_ITEMS = [
+    # Consumibles
+    "T6_POTION_HEAL",
+    "T7_POTION_HEAL",
+    "T8_POTION_HEAL",
+    "T6_POTION_CLEANSE",
+    "T8_POTION_CLEANSE",
+    "T7_MEATPIE",
+    "T8_MEATPIE",
+    "T7_OMELETTE",
+    "T8_OMELETTE",
+    "T7_STEW",
+    "T8_STEW",
+    # Recursos Refinados (Materia prima de alta demanda)
     "T4_CLOTH",
     "T5_CLOTH",
     "T6_CLOTH",
@@ -91,146 +62,198 @@ ITEMS_TO_SCAN = [
     "T6_METALBAR",
     "T7_METALBAR",
     "T8_METALBAR",
+    # Equipamiento Meta y Monturas
+    "T4_BAG",
+    "T5_BAG",
+    "T6_BAG",
+    "T7_BAG",
+    "T8_BAG",
+    "T5_MOUNT_ARMOREDHORSE",
+    "T6_MOUNT_ARMOREDHORSE",
+    "T5_MOUNT_COW",
+    "T8_MOUNT_COW",
+    "T4_CAPE",
+    "T5_CAPE",
+    "T6_CAPE",
 ]
 
-# Rango de ganancia configurado: de 3,000 a 5,000 de plata
-MIN_PROFIT = 3000
-MAX_PROFIT = 5000
-notification_channel_id = None
+CITIES = [
+    "Martlock",
+    "Bridgewatch",
+    "Lymhurst",
+    "Fort Sterling",
+    "Thetford",
+    "Caerleon",
+]
 
 
-def find_transport_opportunities():
-    items_str = ",".join(ITEMS_TO_SCAN)
+# 4. Lógica de inversión y análisis de mercado
+def calcular_portafolio_inversion(
+    presupuesto=10000000,
+    ciudad_origen="Fort Sterling",
+    ciudad_destino="Caerleon",
+):
+    items_str = ",".join(HIGH_LIQUIDITY_ITEMS)
     url = f"https://www.albion-online-data.com/api/v2/stats/prices/{items_str}.json"
-    opportunities = []
 
     try:
         res = requests.get(url, timeout=15)
         if res.status_code != 200:
-            return opportunities
+            return None, "Error consultando la API de Albion Data."
 
         data = res.json()
-        item_prices = {}
+        precios_origen = {}
+        precios_destino = {}
 
         for entry in data:
             item_id = entry["item_id"]
             city = entry["city"]
             sell_price = entry["sell_price_min"]
 
-            if city not in CITIES or sell_price <= 0:
+            if sell_price <= 0:
                 continue
 
-            if item_id not in item_prices:
-                item_prices[item_id] = []
+            if city == ciudad_origen:
+                precios_origen[item_id] = sell_price
+            elif city == ciudad_destino:
+                precios_destino[item_id] = sell_price
 
-            item_prices[item_id].append({"city": city, "price": sell_price})
+        oportunidades = []
 
-        for item_id, prices in item_prices.items():
-            if len(prices) < 2:
-                continue
-
-            cheapest = min(prices, key=lambda x: x["price"])
-            expensive = max(prices, key=lambda x: x["price"])
-
-            buy_price = cheapest["price"]
-            sell_price = expensive["price"]
-            net_profit = (sell_price * 0.96) - buy_price
-
-            # Filtro para rango entre 3,000 y 5,000 de plata
+        for item_id in HIGH_LIQUIDITY_ITEMS:
             if (
-                MIN_PROFIT <= net_profit <= MAX_PROFIT
-                and cheapest["city"] != expensive["city"]
+                item_id in precios_origen
+                and item_id in precios_destino
             ):
-                opportunities.append({
-                    "item": item_id,
-                    "buy_city": cheapest["city"],
-                    "buy_price": buy_price,
-                    "sell_city": expensive["city"],
-                    "sell_price": sell_price,
-                    "profit": int(net_profit),
+                p_compra = precios_origen[item_id]
+                p_venta = precios_destino[item_id]
+
+                # Descuento del 6.5% (4% Impuesto de mercado Premium + 2.5% Tasa de orden)
+                ingreso_neto_unidad = p_venta * 0.935
+                ganancia_unidad = ingreso_neto_unidad - p_compra
+                roi = (
+                    ganancia_unidad / p_compra
+                ) * 100 if p_compra > 0 else 0
+
+                # Filtro de Seguridad: Mínimo 12% de ROI para evitar estancamiento
+                if roi >= 12.0 and ganancia_unidad > 0:
+                    oportunidades.append({
+                        "item": item_id,
+                        "compra": p_compra,
+                        "venta": p_venta,
+                        "ganancia_u": ganancia_unidad,
+                        "roi": roi,
+                    })
+
+        if not oportunidades:
+            return (
+                None,
+                f"No se encontraron oportunidades seguras entre {ciudad_origen} y {ciudad_destino} con ROI superior al 12%.",
+            )
+
+        # Ordenar por el mejor Retorno de Inversión (ROI)
+        oportunidades.sort(key=lambda x: x["roi"], reverse=True)
+
+        # Algoritmo de optimización de presupuesto (Knapsack Simplificado)
+        capital_restante = presupuesto
+        carrito = []
+        inversion_total = 0
+        ganancia_total = 0
+
+        for opp in oportunidades:
+            if capital_restante < opp["compra"]:
+                continue
+
+            # Límite por item para diversificar el riesgo (máximo 35% del presupuesto por ítem)
+            max_inversion_item = presupuesto * 0.35
+            unidades = int(
+                min(capital_restante, max_inversion_item) // opp["compra"]
+            )
+
+            if unidades > 0:
+                costo_lote = unidades * opp["compra"]
+                ganancia_lote = unidades * opp["ganancia_u"]
+
+                capital_restante -= costo_lote
+                inversion_total += costo_lote
+                ganancia_total += ganancia_lote
+
+                carrito.append({
+                    "item": opp["item"],
+                    "unidades": unidades,
+                    "precio_compra": opp["compra"],
+                    "precio_venta": opp["venta"],
+                    "ganancia_lote": int(ganancia_lote),
+                    "roi": round(opp["roi"], 1),
                 })
 
+        return {
+            "origen": ciudad_origen,
+            "destino": ciudad_destino,
+            "inversion": int(inversion_total),
+            "ganancia": int(ganancia_total),
+            "roi_total": round((ganancia_total / inversion_total) * 100, 2)
+            if inversion_total > 0
+            else 0,
+            "carrito": carrito,
+        }, None
+
     except Exception as e:
-        print(f"Error consultando la API: {e}")
-
-    return opportunities
+        return None, f"Error inesperado: {str(e)}"
 
 
-async def auto_scanner_task():
-    await bot.wait_until_ready()
-    while not bot.is_closed():
-        if notification_channel_id:
-            channel = bot.get_channel(notification_channel_id)
-            if channel:
-                opportunities = find_transport_opportunities()
-                if opportunities:
-                    opportunities.sort(key=lambda x: x["profit"], reverse=True)
-                    msg = f"🚨 **OPORTUNIDADES DE TRANSPORTE DETECTADAS ({MIN_PROFIT:,} - {MAX_PROFIT:,} Silver)** 🚨\n\n"
-                    for opp in opportunities[:5]:
-                        msg += (
-                            f"📦 **Ítem:** `{opp['item']}`\n"
-                            f"🛒 **Comprar en:** {opp['buy_city']} a {opp['buy_price']:,} plata\n"
-                            f"💰 **Vender en:** {opp['sell_city']} a {opp['sell_price']:,} plata\n"
-                            f"📈 **Ganancia neta aprox.:** +{opp['profit']:,} de plata\n"
-                            f"----------------------------------------\n"
-                        )
-                    await channel.send(msg)
-
-        await asyncio.sleep(600)
-
-
+# 5. Comandos de Discord
 @bot.event
 async def on_ready():
-    print(f"¡Bot conectado con éxito como {bot.user}!")
-    bot.loop.create_task(auto_scanner_task())
+    print(f"¡Bot de Inversión listo como {bot.user}!")
 
 
 @bot.command()
-async def activar(ctx):
-    global notification_channel_id
-    notification_channel_id = ctx.channel.id
+async def invertir(
+    ctx,
+    monto: int = 10000000,
+    origen: str = "Fort Sterling",
+    destino: str = "Caerleon",
+):
     await ctx.send(
-        f"✅ **Escáner de transporte activado.**\n"
-        f"Revisaré el mercado cada 10 minutos buscando ganancias entre {MIN_PROFIT:,} y {MAX_PROFIT:,} de plata."
+        f"⏳ Analizando mercado de liquidez alta para invertir **{monto:,} Silver** desde **{origen}** hacia **{destino}**..."
     )
 
+    resultado, error = calcular_portafolio_inversion(monto, origen, destino)
 
-@bot.command()
-async def buscar(ctx):
-    await ctx.send("🔍 Escaneando precios en el mercado de Albion...")
-    opportunities = find_transport_opportunities()
-
-    if not opportunities:
-        await ctx.send(
-            f"❌ No se encontraron oportunidades en el rango de {MIN_PROFIT:,} a {MAX_PROFIT:,} de plata en este momento."
-        )
+    if error:
+        await ctx.send(f"❌ {error}")
         return
 
-    opportunities.sort(key=lambda x: x["profit"], reverse=True)
-    msg = f"📊 **Resultados encontrados ({MIN_PROFIT:,} - {MAX_PROFIT:,} Silver):**\n\n"
-    for opp in opportunities[:5]:
+    msg = (
+        f"📊 **PORTAFOLIO DE INVERSIÓN SUGERIDO**\n"
+        f"📍 **Ruta:** {resultado['origen']} ➔ {resultado['destino']}\n"
+        f"💰 **Presupuesto Usado:** {resultado['inversion']:,} / {monto:,} Silver\n"
+        f"📈 **Ganancia Neta Estimada:** **+{resultado['ganancia']:,} Silver**\n"
+        f"🚀 **Retorno de Inversión (ROI):** **{resultado['roi_total']}%**\n"
+        f"----------------------------------------\n"
+        f"🛒 **CARRITO DE COMPRAS:**\n\n"
+    )
+
+    for item in resultado["carrito"]:
         msg += (
-            f"📦 **Ítem:** `{opp['item']}`\n"
-            f"🛒 **Comprar en:** {opp['buy_city']} ({opp['buy_price']:,})\n"
-            f"💰 **Vender en:** {opp['sell_city']} ({opp['sell_price']:,})\n"
-            f"📈 **Ganancia neta:** +{opp['profit']:,} de plata\n\n"
+            f"📦 **{item['unidades']}x** `{item['item']}`\n"
+            f"   • Comprar en {resultado['origen']} a: {item['precio_compra']:,}\n"
+            f"   • Vender en {resultado['destino']} a: {item['precio_venta']:,}\n"
+            f"   • Ganancia lote: +{item['ganancia_lote']:,} Silver ({item['roi']}% ROI)\n\n"
         )
+
     await ctx.send(msg)
 
 
-# Servidor HTTP para Render
-def run_http():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
-
-
-# Iniciar el hilo del servidor web ANTES de ejecutar el cliente de Discord
+# 6. Inicio seguro de procesos (Solución al error de puertos HTTP)
 if __name__ == "__main__":
-    server_thread = Thread(target=run_http, daemon=True)
-    server_thread.start()
+    # Iniciar Flask en un hilo independiente ANTES de que discord.py bloquee el hilo principal
+    t = Thread(target=run_http, daemon=True)
+    t.start()
 
     TOKEN = os.environ.get("DISCORD_TOKEN")
     if TOKEN:
         bot.run(TOKEN)
     else:
-        print("Error: No se encontró la variable de entorno DISCORD_TOKEN.")
+        print("Error: La variable DISCORD_TOKEN no está configurada.")
