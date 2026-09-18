@@ -371,11 +371,15 @@ async def buscar(ctx):
             f"📈 **Ganancia neta:** +{opp['profit']:,} de plata\n\n"
         )
     await ctx.send(msg)
+# Función para ejecutar el servidor Flask
+def run_http():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
-
-# Iniciar el servidor HTTP en segundo plano
+# Iniciar Flask en un hilo secundario antes de lanzar el bot
 Thread(target=run_http, daemon=True).start()
 
+# Iniciar el bot de Discord
 TOKEN = os.environ.get("DISCORD_TOKEN")
 if TOKEN:
     bot.run(TOKEN)
