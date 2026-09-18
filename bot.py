@@ -218,11 +218,19 @@ async def buscar(ctx):
     await ctx.send(msg)
 
 
-# Iniciar Flask en segundo plano antes del bot
-Thread(target=run_http, daemon=True).start()
+# Servidor HTTP para Render
+def run_http():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
-TOKEN = os.environ.get("DISCORD_TOKEN")
-if TOKEN:
-    bot.run(TOKEN)
-else:
-    print("Error: No se encontró la variable de entorno DISCORD_TOKEN.")
+
+# Iniciar el hilo del servidor web ANTES de ejecutar el cliente de Discord
+if __name__ == "__main__":
+    server_thread = Thread(target=run_http, daemon=True)
+    server_thread.start()
+
+    TOKEN = os.environ.get("DISCORD_TOKEN")
+    if TOKEN:
+        bot.run(TOKEN)
+    else:
+        print("Error: No se encontró la variable de entorno DISCORD_TOKEN.")
